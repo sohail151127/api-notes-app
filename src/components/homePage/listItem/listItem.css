@@ -64,3 +64,15 @@
   padding: 0;
 
 }
+
+.shareButtonFull{
+  background-color: transparent;
+  text-align: inherit;
+}
+
+.shareButton{
+  background-color: transparent;
+  text-align: inherit;
+  border: none;
+  padding: inherit;
+}

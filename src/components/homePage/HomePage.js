@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import "./homePage.css"
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -13,46 +13,33 @@ import ListItem from './listItem/ListItem';
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import "bootstrap/dist/css/bootstrap.min.css";
 import _ from 'lodash';
+import axios from 'axios';
+
+import { CSVLink } from "react-csv";
+
 
 const HomePage = ( ) => {
-  const navigate=useNavigate()
   const [query, setQuery] = useState("")
+  const [allNotes, setAllNotes] = useState([])
 
-  //Removing "lists" key from localStorage
-  localStorage.removeItem("lists")
-
-  //Getting "array of keys" from localStorage
-  var arrayOfKeys = []
-    for (var i=0; i< localStorage.length; i++) {
-      var key = localStorage.key(i);
-      // var value = localStorage[key];
-      // arrayOfKeys.push(key)    i'm replacing with lodash fn...
-      arrayOfKeys = _.concat(arrayOfKeys, key)
+  const refresh =(deleteNote)=>{
+    setAllNotes(deleteNote)
   }
-  // console.log("old:",arrayOfKeys)
 
 
+useEffect(() => {
+ allNotesfn()
+}, [])
 
-  // Now I'm removing "isChecked" key from arrayOfKeys
-  // let filteredArrayOfKeys = arrayOfKeys.filter(x => x.includes("notesAppKey"))
-  let filteredArrayOfKeys = _.filter(arrayOfKeys, (x)=>_.includes(x, "notesAppKey"))
-  // console.log("new:",filteredArrayOfKeys)
-
-  //Corresponding values of each Key from localStorage
-  // let data2 = filteredArrayOfKeys.map((x)=>{
-  //   return (JSON.parse(localStorage.getItem(x)))
-  // })
-  let data2 = _.map(filteredArrayOfKeys, (x)=>{
-    return (JSON.parse(localStorage.getItem(x)))
-  })
-  // console.log("keyValues",data2)
-
- const deleteAll=()=>{
-  localStorage.clear()
-  navigate("/")
- }
-
-//  console.log("data2:",data2)
+const allNotesfn=async()=>{
+await axios.get("http://foodapis.techenablers.info/api/notes")
+.then((res)=>{
+console.log("home page all notes:",res)
+setAllNotes(res.data.data.notes)
+})
+}
+console.log("allNotes",allNotes.map((x)=>x.checklists
+))
 
   return (
     <>
@@ -71,11 +58,19 @@ const HomePage = ( ) => {
                   id="basic-nav-dropdown" 
                   className="navDrop">
 
-                  <NavDropdown.Item 
-                    onClick={deleteAll}
+                  <NavDropdown.Item as="button"
                     
                     className='navItem'>
-                      Delete all notes
+                      <a
+                          className='export'
+                          href={`data:text/json;charset=utf-8,${encodeURIComponent(
+                            JSON.stringify(allNotes)
+                          )}`}
+                          download="filename.json"
+                        >
+                          {`Export`}
+                      </a>
+                      
                   </NavDropdown.Item>
 
                 </NavDropdown>
@@ -83,6 +78,8 @@ const HomePage = ( ) => {
             </Col>
         </Row>
     </Container>
+
+    
 
 <Container className='allBelowHomeNote'>
     {/* home page search bar part */}
@@ -101,30 +98,19 @@ const HomePage = ( ) => {
     {/* home page below search bar saved data  */}  
     <Container className='containerItems'>
       <Row className="main__row">     
-   {/* {
-    data2.filter((a,i)=>a[1].DATA.some(d=>d.title?.toLowerCase().includes(query?.toLocaleLowerCase())) ||
-    a[1].DATA.some(d=>d.content?.toLowerCase().includes(query?.toLocaleLowerCase())) ||
-    a[1].DATA.some(d=>d.amount?.toLowerCase().includes(query?.toLocaleLowerCase()))
-    ).map((x,i)=>{
-      return <ListItem 
-              x={x}
-              key={i}
-              id ={i}
-              query={query}
-      />
-    })
-   } */}
 
 {
-    _.map( _.filter(data2, (a,i)=>a[2]?.title?.toLowerCase().includes(query?.toLocaleLowerCase()) ||
-    a[1].DATA.some(d=>d.content?.toLowerCase().includes(query?.toLocaleLowerCase())) ||
-    a[1].DATA.some(d=>d.amount?.toLowerCase().includes(query?.toLocaleLowerCase()))
+    _.map( _.filter(allNotes, (a,i)=>a.title?.toLowerCase().includes(query?.toLocaleLowerCase()) ||
+    a.checklists.some(d=>d.name?.toLowerCase().includes(query?.toLocaleLowerCase())) ||
+    a.checklists.some(d=>String(d.amount)?.includes(String(query)))
     ) , (x,i)=>{
       return <ListItem 
               x={x}
               key={i}
               id ={i}
               query={query}
+              refresh={refresh}
+              
       />
     })
    }
@@ -142,8 +128,11 @@ const HomePage = ( ) => {
       <FiPlus className='plus' />
       </Link>
     </footer>
+
+    
 {/* ...............................   */}
 </Container>
+        
     </Container>
     </>
   )

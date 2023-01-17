@@ -1,6 +1,6 @@
 import React, {useEffect } from 'react'
 import { useState } from 'react'
-import { Link, useParams} from "react-router-dom";
+import { Link, useNavigate, useParams} from "react-router-dom";
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -11,68 +11,27 @@ import { FiPlus } from 'react-icons/fi';
 import moment from 'moment';
 // import Note from "../note/Note.js";
 import "../note/note.css";
-import {v4 as uuid} from "uuid";
 import _ from "lodash";
+import axios from 'axios';
+import { Alert, Snackbar } from '@mui/material';
 
 
 const UpdateNotes = ( ) => {
   const noteId = useParams()
+  const navigate = useNavigate()
 
-  // here i'm getting data from localStorage
-const getlocalAddItem =( )=>{
-  if (noteId.id !== "new"){
-    let data3 = JSON.parse(localStorage.getItem(noteId.id))
-    // console.log("localStorageMatchedDataWithNoteId:",data3)
-    let data4 = data3[1].DATA.filter((x,i)=>!x.isChecked)
-    return data4    
-
-  } else if (noteId.id === "new"){
-    return []
-  }
-}
-
-  // here i'm getting data from localStorage
-  const getlocalArchiveData =( )=>{
-    if (noteId.id !== "new"){
-      let data3 = JSON.parse(localStorage.getItem(noteId.id))
-      // console.log("localStorageMatchedDataWithNoteId:",data3)
-      let data4 = data3[1].DATA.filter((x,i)=>x.isChecked)
-
-      return data4    
-  
-    } else if (noteId.id === "new"){
-      return []
-    }
-  }
-
-//geting old title if any
-const getDataForTitle =( )=>{
-  if (noteId.id !== "new"){
-    let data3 = JSON.parse(localStorage.getItem(noteId.id))
-    let data4 = data3[2]?.title
-    return data4    
-
-  } else if (noteId.id === "new"){
-    return []
-  }
-}
-
-  const [id, setId] = useState("")
-  const [addItem, setAddItem] = useState(getlocalAddItem)
-  const [title, setTitle] = useState(getDataForTitle)
-  const [archiveNotes, setArchiveNotes] = useState(getlocalArchiveData)
+  const [addItem, setAddItem] = useState([])
+  const [title, setTitle] = useState([])
+  const [archiveNotes, setArchiveNotes] = useState([])
   const [toggleState, setToggleState] = useState(false)
   const [showDataInButton, setShowDataInButton] = useState("Show Archived")
-
-  useEffect(() => {
-    setId(`notesAppKey${uuid()}`)
-  }, [])
-  // console.log(id)
+  const [responsive, setResponsive] = useState("")
+  const [message, setMessage] = useState(false)
 
   const [note, setNotes] = useState(
     {
-      // title: "",
-      content: "",
+
+      name: "",
       amount: ""
     }
   )
@@ -86,142 +45,261 @@ const getDataForTitle =( )=>{
     setNotes((prevData)=>{
       return{
         ...prevData, 
-        [name] : value,
-        date: `${moment().format('ddd ,D MMMM YY, hh:mm a')}`
+        [name] : value
       } 
     })
   }
+console.log("responsive:",responsive)
+console.log("note:",note)
+
+//On First Load of Page, getting old note
+  useEffect(() => {
+
+    if (noteId.id !== "new"){
+    
+      axios.get(`http://foodapis.techenablers.info/api/notes/${noteId.id}`).then((res)=>{
+              console.log("notNew-get-response:",res)
+              setTitle(res.data.data.note.title)
+              setAddItem(res.data.data.note.checklists.filter((x)=>x.status === false))
+              setArchiveNotes(res.data.data.note.checklists.filter((x)=>x.status === true))
+              setResponsive(res.data.data.note.id)
+            })
+        .catch(function (error) {
+          console.log("notNew-get-response:",error);
+        });
+      }
+    
+  }, [ ])
+  
+
 
   //adding new note
   const addEvent =()=>{
-    setAddItem((prevData)=>{
-      return [...prevData, note]
-    });
+
+    if(responsive !== ""){
+      const {name, amount} = note
+
+        setMessage(false)
+
+        axios.put(`http://foodapis.techenablers.info/api/notes/${responsive}`, {
+          "title": title,
+          checklists: [
+            {
+              "name":name,
+              "amount":amount
+            }
+          ]
+        })
+        .then(function (response) {
+          console.log("After1st-post-response:",response);
+        if(response.status === 200){
+          axios.get(`http://foodapis.techenablers.info/api/notes/${response.data.data.note.id}`)
+          .then((res)=>{
+            console.log("After1st-get-response",res)
+            setAddItem(res.data.data.note.checklists.filter((x)=>x.status === false))
+            setArchiveNotes(res.data.data.note.checklists.filter((x)=>x.status === true))
+          })
+        }
+        })
+        .catch(function (error) {
+          console.log("After1st-post-error:",error);
+          setMessage(true)
+        });
+
+     
+
+      
+    }else if(responsive === ""){
+      const {name, amount} = note
+      
+        setMessage(false)
+
+        axios.post(`http://foodapis.techenablers.info/api/notes`, {
+        title: title,
+        checklists: [
+          {
+            name:name,
+            amount:amount
+          }
+        ]
+      })
+      .then(function (response) {
+        console.log("1st-post-response:",response);
+        if(response.status === 200){
+          setResponsive(response.data.data.note.id)
+          axios.get(`http://foodapis.techenablers.info/api/notes/${response.data.data.note.id}`).then((res)=>{
+            console.log("1st-get-response:",res)
+            setAddItem(res.data.data.note.checklists.filter((x)=>x.status === false))
+            setArchiveNotes(res.data.data.note.checklists.filter((x)=>x.status === true))
+          })
+        }
+      })
+      .catch(function (error) {
+        console.log("1st-post-response:",error);
+        setMessage(true)
+      });
+    }
+
     setNotes({
-      content: "",
+      name: "",
       amount: ""
     })
+
+      
   }
 
-    //deleting note
+  console.log("message:",message)
+    //deleting items in the checklists
     const onDelete =(id)=>{
+      console.log("delete-id:",id)
       let a = window.confirm("Are you sure?")
       if(a){
-                setAddItem((prevData)=>{
-                  return _.filter(prevData, (i,j)=>{
-                    return j !== id;  
-                  })
-                }
-                  ) 
+                axios.delete(`http://foodapis.techenablers.info/api/checklists/${id}`)
+                .then((res)=>{
+                  console.log("delete-res:",res)  
+                  if(res.status === 200){
+                  
+                    axios.get(`http://foodapis.techenablers.info/api/notes/${responsive}`)
+                    .then((ress)=>{
+                      
+                      setAddItem(ress.data.data.note.checklists.filter((x)=>x.status === false))
+                      setArchiveNotes(ress.data.data.note.checklists.filter((x)=>x.status === true))
+                    })
+                  }
+                })
       }else{
         return;
       }         
     }
 
 
-    const onArchiveDelete =(id)=>{
-      let a = window.confirm("Are you sure?")
-      if(a){
-                setArchiveNotes((prevData)=>{
-                  return _.filter(prevData, (i,j)=>{
-                    return j !== id;  
-                  })
-                }
-                  ) 
-      }else{
-        return;
-      }         
-    }
 
-    // sum part.........................
+    // Doing sum for unArchived items.
     let store= _.map(addItem, (x, i)=>{
       return  Number(x.amount)
     })
     let sum = store.reduce((a,b)=>a+b, 0)
 
+
+
     //updating notes
-    const savedContentChange =(e,index)=>{
-      const name = e.target.name;
-      const value = e.target.value;
-      setAddItem((prevData)=>{
-        // console.log("prevData:", prevData)
-        const updatedPrevData = prevData.map((pData,i)=>(
-          i===index?
-          {
-            ...pData, 
-            [name]: value,
-          
-        } : {...pData}));
-        return [...updatedPrevData]
-      });
+
+    const savedContentChange =(e,iddd,index)=>{
+
+      axios.put(`http://foodapis.techenablers.info/api/notes/${responsive}`, {
+              "title": title,
+              checklists: [
+                {
+                  "id":iddd,
+                  "name":e.target.value,
+                  "amount":addItem[index].amount
+                }
+              ]
+            }).then((res)=>{
+              console.log("update-content-res:",res)
+              setAddItem(res.data.data.note.checklists.filter((x)=>x.status === false))
+            })
     }
 
-    //add data to unique "key" in localStorage
+
+    const savedAmountChange =(e,iddd,index)=>{
+
+      let name = addItem[index].name
+      console.log("name:",name)
+      let amount = e.target.value
+      console.log("amount:",amount)
+      console.log("iddd:",iddd)
+      console.log("index:",index)
+      axios.put(`http://foodapis.techenablers.info/api/notes/${responsive}`, {
+              "title": title,
+              checklists: [
+                {
+                  "id":iddd,
+                  "name":name,
+                  "amount":amount
+                }
+              ]
+            }).then((res)=>{
+              console.log("update-amount-res:",res)
+              setAddItem(res.data.data.note.checklists.filter((x)=>x.status === false))
+            })
+    }
+
+    // on Back Arrow click
     const addKey=()=>{
-      let data1 = _.concat(addItem, archiveNotes)
-
-      if (data1.length > 0){
-        if (noteId.id === "new"){
-          if(title?.length > 0){
-            let data2 = [{"ID":id}, {"DATA":data1},{title:title}]
-            localStorage.setItem(id,JSON.stringify(data2))
-          }else{
-            let data2 = [{"ID":id},{"DATA":data1}]
-            localStorage.setItem(id,JSON.stringify(data2))
-          }
-        } else if (noteId.id !== "new"){
-            if(title?.length > 0){
-              let data5 = [{"ID":noteId.id}, {"DATA":data1},{title:title}]
-              localStorage.setItem(noteId.id,JSON.stringify(data5))
-            }else{
-              let data5 = [{"ID":noteId.id},{"DATA":data1}]
-              // localStorage.removeItem(noteId.id)
-              localStorage.setItem(noteId.id,JSON.stringify(data5))
-            }
-        }
-      }else if(data1.length === 0 && noteId.id === "new" && title?.length > 0){
-          let data2 = [{"ID":id}, {"DATA":[]},{title:title}]
-          localStorage.setItem(id,JSON.stringify(data2))
+      if(responsive !== ""){
+        setMessage(false)
+        axios.get(`http://foodapis.techenablers.info/api/notes/${responsive}`)
+        .then((res)=>{
+         axios.put(`http://foodapis.techenablers.info/api/notes/${responsive}`, {
+            "title": title,
+            checklists: res.data.data.note.checklists
+          })
+          .then((response)=>{
+            console.log("last-response:",response)
+  
+            navigate("/")
+          })
+          .catch(function (error) {
+            console.log("back-arrow-error:",error);
+            setMessage(true)
+          });
+        })
+        
       }else{
-        return;
+        navigate("/")
       }
-      setAddItem([])
+      
+      
     }
 
-    //handling checkboxes
-    const handleCheckboxes =(e,index)=>{
+    //handling unArchived checkboxes
+    const handleCheckboxes =(e,iddd)=>{
+      console.log("iddd:",iddd)
 
-      // console.log("event:",e)
-      // console.log("index:",index)
-      // setCheckBox(e.target.value)
+      axios.post(`http://foodapis.techenablers.info/api/notes/${iddd}/status`, {
+        status: 1
+      }).then((res)=>{
+        console.log("chkbx-res:",res)
+        if(res.status === 200){
+          axios.get(`http://foodapis.techenablers.info/api/notes/${responsive}`)
+          .then((response)=>{
 
-      const updatedNotes = addItem?.filter((x,i)=> i !== index)
+            setAddItem(response.data.data.note.checklists.filter((x)=> x.status === false))
 
-        setAddItem(updatedNotes);
+            setArchiveNotes(response.data.data.note.checklists.filter((x)=> x.status === true))
 
-        setArchiveNotes(prevData => {
-          return _.flattenDeep([...prevData, addItem?.filter((y,j)=>j === index).map(v => ({...v, isChecked: true}))])
+          })
         }
-          )
+      })
+
     }
 
-    // console.log("addItem:",addItem)
-    // console.log("archiveNotes:",archiveNotes)
 
     //handling Archivedcheckboxes
-    localStorage.setItem("archiveNotes",JSON.stringify(archiveNotes))
-    const handleUnArchivedCheckboxes =(e,index)=>{
-      // console.log("event:",e)
-      // console.log("index:",index)
-      // setCheckBox(e.target.value)
-      const updateArchiveNotes = archiveNotes.filter((x,i)=> i !== index)
-        setArchiveNotes(updateArchiveNotes);
-        setAddItem(prevData => {
-          return _.flattenDeep([...prevData, JSON.parse(localStorage.getItem("archiveNotes")).filter((y,j)=>j === index).map(({content, amount, date}) => ({content, amount, date}))])
+    const handleArchivedCheckboxes =(e,iddd)=>{
+      console.log("iddd in archived:",iddd)
+
+      axios.post(`http://foodapis.techenablers.info/api/notes/${iddd}/status`, {
+        status: 0
+      }).then((res)=>{
+        console.log("Archived-chkbx-res:",res)
+        if(res.status === 200){
+          axios.get(`http://foodapis.techenablers.info/api/notes/${responsive}`)
+          .then((response)=>{
+
+            setAddItem(response.data.data.note.checklists.filter((x)=> x.status === false))
+
+            setArchiveNotes(response.data.data.note.checklists.filter((x)=> x.status === true))
+
+          })
         }
-          )
+      })
+
     }
-     // Archive notes sum part.........................
+
+
+     // Archived items sum part...
      let save= _.map(archiveNotes, (x, i)=>{
       return  Number(x.amount)
     })
@@ -237,6 +315,10 @@ const getDataForTitle =( )=>{
       }
     }
 
+    console.log("addItem:",addItem)
+    console.log("archiveNotes:", archiveNotes)
+    
+
     return (
     <>
   <Container fluid className='m-0 p-0'>    
@@ -245,7 +327,7 @@ const getDataForTitle =( )=>{
         <Row className='back__arrow2'>  
 
             <Col xs={1} className='back__arrow3'>
-            <Link className='back__arrow3__4' to="/" onClick={addKey}><BiArrowBack className='back__arrow4' /></Link>
+            <Row className='back__arrow3__4 mt-2' onClick={addKey}><BiArrowBack className='back__arrow4' /></Row>
              </Col>  
 
             <Col xs={11} className='header3'>
@@ -284,39 +366,38 @@ const getDataForTitle =( )=>{
              </div>        
     </Container>
 
-{/* saved data part on update page */}
-    {/* {
-      _.map(addItem, (val, index)=>{
-        
-        return <Note 
-              key={index}
-              id ={index}
-              title={val.title}
-              content={val.content}
-              amount={val.amount}
-              date={val.date}
-              deleteItem= {onDelete}
-            />
-      })
-    } */}
+{/* toast or snackbar */}
+    
+          <Snackbar sx={{"width":"40%" }} open={message} autoHideDuration={50} >
+            
+            <Alert severity="warning"  sx={{"backgroundColor":"rgb(245, 179, 127)" }} >
+            No field should be empty!
+            </Alert>
+
+          </Snackbar>
+          
 
 
+{/* unArchived Items */}
     {
     _.map(addItem, (val, index)=>{
-      return <Container className='enterData1' key={index}>
+      return <Container className='enterData1' key={val.id
+      }>
       <Row className='enterData2'>
       
           <Col xs={1} className='checkbox__1'>     
-          <input checked={false} type="checkbox" onChange={(e)=>handleCheckboxes(e,index)} className='checkbox' />
+          <input checked={val.status} type="checkbox" onChange={(e)=>handleCheckboxes(e,val.id
+)} className='checkbox' />
           </Col>
 
           <Col xs={8} className='input__content'>     
             <textarea 
             type="textarea" 
             className='textArea0' 
-            name="content" 
-            value={val.content} 
-            onChange={(e)=>savedContentChange(e,index)}
+            name="name" 
+            value={val.name} 
+            onChange={(e)=>savedContentChange(e,val.id,index
+              )}
             placeholder='Enter Notes' 
             autoComplete='off'
             />
@@ -327,7 +408,8 @@ const getDataForTitle =( )=>{
             type="number" 
             className='input__amount' 
             value={val.amount} 
-            onChange={(e)=>savedContentChange(e,index)}
+            onChange={(e)=>savedAmountChange(e,val.id,index
+              )}
             placeholder='Amount' 
             name="amount" 
             autoComplete='off'
@@ -337,11 +419,12 @@ const getDataForTitle =( )=>{
           <Col xs={1} className='close__button__1'> 
             <button type="submit" 
             
-            className='close__button' onClick={()=>onDelete(index)}> <IoCloseSharp className='close__button__background' /> </button>
+            className='close__button' onClick={()=>onDelete(val.id
+              )}> <IoCloseSharp className='close__button__background' /> </button>
           </Col>
           <Col xs={11} className='date__col__input'>
           <Row className='date__row__input'> 
-              {moment().format('ddd ,D MMMM YY, hh:mm a')} 
+              {moment(val.created_at).format('ddd ,D MMMM YY, hh:mm a')} 
           </Row>
           </Col>
       </Row>
@@ -364,8 +447,8 @@ const getDataForTitle =( )=>{
               <textarea 
               type="textarea" 
               className='textArea0' 
-              name="content" 
-              value={note.content} 
+              name="name" 
+              value={note.name} 
               onChange={InputEvent} 
               placeholder='Enter Notes' 
               autoComplete='off'
@@ -427,11 +510,11 @@ const getDataForTitle =( )=>{
     {/* archived data */}
     {
     _.map(archiveNotes, (val, index)=>{
-      return <Container className='enterData1' key={index}>
+      return <Container className='enterData1' key={val.id}>
       <Row className='enterData2'>
       
           <Col xs={1} className='checkbox__1'>     
-          <input checked type="checkbox" onChange={(e)=>handleUnArchivedCheckboxes(e,index)} className='checkbox' />
+          <input checked={val.status} type="checkbox" onChange={(e)=>handleArchivedCheckboxes(e,val.id)} className='checkbox' />
           </Col>
 
           <Col xs={8} className='input__content' >     
@@ -439,8 +522,8 @@ const getDataForTitle =( )=>{
             style={{textDecoration: 'line-through'}}
             type="textarea" 
             className='textArea0' 
-            name="content" 
-            value={val.content} 
+            name="name" 
+            value={val.name} 
             onChange={(e)=>savedContentChange(e,index)}
             placeholder='Enter Notes' 
             autoComplete='off'
@@ -463,11 +546,11 @@ const getDataForTitle =( )=>{
           <Col xs={1} className='close__button__1'> 
             <button type="submit" 
             
-            className='close__button' onClick={()=>onArchiveDelete(index)}> <IoCloseSharp className='close__button__background' /> </button>
+            className='close__button' onClick={()=>onDelete(val.id)}> <IoCloseSharp className='close__button__background' /> </button>
           </Col>
           <Col xs={11} className='date__col__input'>
           <Row className='date__row__input'> 
-              {moment().format('ddd ,D MMMM YY, hh:mm a')} 
+              {moment(val.created_at).format('ddd ,D MMMM YY, hh:mm a')} 
           </Row>
           </Col>
       </Row>

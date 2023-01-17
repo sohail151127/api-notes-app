@@ -45,6 +45,12 @@
   /* width: fit-content; */
   font-size: medium;
 }
+
+.export{
+  text-decoration: none;
+  background-color: transparent;
+  color: black;
+}
 /* ............... */
 
 .dots__icon{
@@ -156,6 +162,7 @@
   transition: 0.1ms;
   transform: scale(1.2);
 }
+
 
 /* .................... */
 @media screen and (min-width: 760px) {

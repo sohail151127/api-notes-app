@@ -20,10 +20,12 @@
 }
 .back__arrow3{
     background-color: rgb(245, 112, 8);
+    
 }
 
 .back__arrow3__4{
     background-color: rgb(245, 112, 8);
+    cursor: pointer;
 }
 
 .back__arrow4{
