@@ -57,7 +57,7 @@ console.log("note:",note)
 
     if (noteId.id !== "new"){
     
-      axios.get(`https://foodapis.techenablers.info/api/notes/${noteId.id}`).then((res)=>{
+      axios.get(`https://www.foodapis.techenablers.info/api/notes/${noteId.id}`).then((res)=>{
               console.log("notNew-get-response:",res)
               setTitle(res.data.data.note.title)
               setAddItem(res.data.data.note.checklists.filter((x)=>x.status === false))
@@ -81,7 +81,7 @@ console.log("note:",note)
 
         setMessage(false)
 
-        axios.put(`https://foodapis.techenablers.info/api/notes/${responsive}`, {
+        axios.put(`https://www.foodapis.techenablers.info/api/notes/${responsive}`, {
           "title": title,
           checklists: [
             {
@@ -93,7 +93,7 @@ console.log("note:",note)
         .then(function (response) {
           console.log("After1st-post-response:",response);
         if(response.status === 200){
-          axios.get(`https://foodapis.techenablers.info/api/notes/${response.data.data.note.id}`)
+          axios.get(`https://www.foodapis.techenablers.info/api/notes/${response.data.data.note.id}`)
           .then((res)=>{
             console.log("After1st-get-response",res)
             setAddItem(res.data.data.note.checklists.filter((x)=>x.status === false))
@@ -114,7 +114,7 @@ console.log("note:",note)
       
         setMessage(false)
 
-        axios.post(`https://foodapis.techenablers.info/api/notes`, {
+        axios.post(`https://www.foodapis.techenablers.info/api/notes`, {
         title: title,
         checklists: [
           {
@@ -127,7 +127,7 @@ console.log("note:",note)
         console.log("1st-post-response:",response);
         if(response.status === 200){
           setResponsive(response.data.data.note.id)
-          axios.get(`https://foodapis.techenablers.info/api/notes/${response.data.data.note.id}`).then((res)=>{
+          axios.get(`https://www.foodapis.techenablers.info/api/notes/${response.data.data.note.id}`).then((res)=>{
             console.log("1st-get-response:",res)
             setAddItem(res.data.data.note.checklists.filter((x)=>x.status === false))
             setArchiveNotes(res.data.data.note.checklists.filter((x)=>x.status === true))
@@ -154,12 +154,12 @@ console.log("note:",note)
       console.log("delete-id:",id)
       let a = window.confirm("Are you sure?")
       if(a){
-                axios.delete(`https://foodapis.techenablers.info/api/checklists/${id}`)
+                axios.delete(`https://www.foodapis.techenablers.info/api/checklists/${id}`)
                 .then((res)=>{
                   console.log("delete-res:",res)  
                   if(res.status === 200){
                   
-                    axios.get(`https://foodapis.techenablers.info/api/notes/${responsive}`)
+                    axios.get(`https://www.foodapis.techenablers.info/api/notes/${responsive}`)
                     .then((ress)=>{
                       
                       setAddItem(ress.data.data.note.checklists.filter((x)=>x.status === false))
@@ -186,7 +186,7 @@ console.log("note:",note)
 
     const savedContentChange =(e,iddd,index)=>{
 
-      axios.put(`https://foodapis.techenablers.info/api/notes/${responsive}`, {
+      axios.put(`https://www.foodapis.techenablers.info/api/notes/${responsive}`, {
               "title": title,
               checklists: [
                 {
@@ -210,7 +210,7 @@ console.log("note:",note)
       console.log("amount:",amount)
       console.log("iddd:",iddd)
       console.log("index:",index)
-      axios.put(`https://foodapis.techenablers.info/api/notes/${responsive}`, {
+      axios.put(`https://www.foodapis.techenablers.info/api/notes/${responsive}`, {
               "title": title,
               checklists: [
                 {
@@ -229,9 +229,9 @@ console.log("note:",note)
     const addKey=()=>{
       if(responsive !== ""){
         setMessage(false)
-        axios.get(`https://foodapis.techenablers.info/api/notes/${responsive}`)
+        axios.get(`https://www.foodapis.techenablers.info/api/notes/${responsive}`)
         .then((res)=>{
-         axios.put(`https://foodapis.techenablers.info/api/notes/${responsive}`, {
+         axios.put(`https://www.foodapis.techenablers.info/api/notes/${responsive}`, {
             "title": title,
             checklists: res.data.data.note.checklists
           })
@@ -257,12 +257,12 @@ console.log("note:",note)
     const handleCheckboxes =(e,iddd)=>{
       console.log("iddd:",iddd)
 
-      axios.post(`https://foodapis.techenablers.info/api/notes/${iddd}/status`, {
+      axios.post(`https://www.foodapis.techenablers.info/api/notes/${iddd}/status`, {
         status: 1
       }).then((res)=>{
         console.log("chkbx-res:",res)
         if(res.status === 200){
-          axios.get(`https://foodapis.techenablers.info/api/notes/${responsive}`)
+          axios.get(`https://www.foodapis.techenablers.info/api/notes/${responsive}`)
           .then((response)=>{
 
             setAddItem(response.data.data.note.checklists.filter((x)=> x.status === false))
@@ -280,12 +280,12 @@ console.log("note:",note)
     const handleArchivedCheckboxes =(e,iddd)=>{
       console.log("iddd in archived:",iddd)
 
-      axios.post(`https://foodapis.techenablers.info/api/notes/${iddd}/status`, {
+      axios.post(`https://www.foodapis.techenablers.info/api/notes/${iddd}/status`, {
         status: 0
       }).then((res)=>{
         console.log("Archived-chkbx-res:",res)
         if(res.status === 200){
-          axios.get(`https://foodapis.techenablers.info/api/notes/${responsive}`)
+          axios.get(`https://www.foodapis.techenablers.info/api/notes/${responsive}`)
           .then((response)=>{
 
             setAddItem(response.data.data.note.checklists.filter((x)=> x.status === false))
