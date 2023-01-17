@@ -15,8 +15,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import _ from 'lodash';
 import axios from 'axios';
 
-import { CSVLink } from "react-csv";
-
 
 const HomePage = ( ) => {
   const [query, setQuery] = useState("")
