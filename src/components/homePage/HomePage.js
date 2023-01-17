@@ -30,7 +30,7 @@ useEffect(() => {
 }, [])
 
 const allNotesfn=async()=>{
-await axios.get("http://foodapis.techenablers.info/api/notes")
+await axios.get("https://foodapis.techenablers.info/api/notes")
 .then((res)=>{
 console.log("home page all notes:",res)
 setAllNotes(res.data.data.notes)

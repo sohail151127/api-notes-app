@@ -3,7 +3,7 @@ import { Row } from 'react-bootstrap';
 import Col from 'react-bootstrap/Col';
 import { useNavigate } from 'react-router-dom';
 import "../addLines/addLines.css";
-import _ from "lodash";
+// import _ from "lodash";
 
 const AddLines = (props) => {
   const Navigate = useNavigate()

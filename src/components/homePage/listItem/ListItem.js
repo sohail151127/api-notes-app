@@ -23,10 +23,10 @@ const ListItem = (props) => {
    let boxId = e.currentTarget.id
 
   console.log("boxId:",boxId)
-  axios.delete(`http://foodapis.techenablers.info/api/notes/${boxId}`)
+  axios.delete(`https://foodapis.techenablers.info/api/notes/${boxId}`)
    .then((res)=>{
     console.log("delete-note-res:",res)
-    axios.get(`http://foodapis.techenablers.info/api/notes`)
+    axios.get(`https://foodapis.techenablers.info/api/notes`)
     .then((response)=>{
       console.log("get-res-after-dlt-note:",response)
       
@@ -39,7 +39,7 @@ const ListItem = (props) => {
     let boxId = id
  
    console.log("shareBoxId:",boxId)
-   axios.get(`http://foodapis.techenablers.info/api/notes/${boxId}`)
+   axios.get(`https://foodapis.techenablers.info/api/notes/${boxId}`)
     .then((res)=>{
      console.log("share-this-note-res:",res)
      setShareData(res.data.data.note)
